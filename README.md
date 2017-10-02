@@ -1,7 +1,5 @@
 # babel-plugin-transform-react-pure-components
-Optimize React code by making pure classes into functions
-
-> Note: Requires React v15.0.0 or higher.
+Optimize React code by transforming pure components into stateless functional components.
 
 ## Example
 
@@ -53,20 +51,25 @@ $ npm install babel-plugin-transform-react-pure-components
 
 ```json
 {
-  "plugins": ["react-pure-components"]
+  "plugins": ["transform-react-pure-components"]
 }
 ```
 
 ### Via CLI
 
 ```sh
-$ babel --plugins react-pure-components script.js
+$ babel --plugins transform-react-pure-components script.js
 ```
 
 ### Via Node API
 
-```javascript
+```js
 require("babel-core").transform("code", {
   plugins: ["transform-react-pure-components"]
 });
 ```
+
+## Options
+
+* `pureComponents = false` &mdash; Transform components extending `React.PureComponent` classes (this effectively converts them back to `React.Component`).
+* `assignDefaultProps = false` &mdash; Use `Object.assign(defaultProps, props)` to calculate the props.
