@@ -3,6 +3,8 @@
     "syntax-flow",
     "syntax-jsx",
     "syntax-class-properties",
-    "../../../src/index.js"
+    ["../../../src/index.js", {
+        "pureComponents": true
+    }]
   ]
 }

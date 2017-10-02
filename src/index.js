@@ -1,5 +1,5 @@
 export default function({ types: t }) {
-  function isReactClass(path) {
+  function isReactClass(path, pureComponents) {
     const superClass = path.node.superClass;
 
     const isDirectReactClass = (
@@ -7,7 +7,10 @@ export default function({ types: t }) {
       t.isIdentifier(superClass.object, { name: 'React' }) &&
       (
         t.isIdentifier(superClass.property, { name: 'Component' }) ||
-        t.isIdentifier(superClass.property, { name: 'PureComponent' })
+        (
+          pureComponents &&
+          t.isIdentifier(superClass.property, { name: 'PureComponent' })
+        )
       )
     );
 
@@ -27,8 +30,10 @@ export default function({ types: t }) {
             .filter(specifier => (
               t.isImportSpecifier(specifier) &&
               (
-                specifier.imported.name === 'Component' ||
-                specifier.imported.name === 'PureComponent'
+                specifier.imported.name === 'Component' || (
+                  pureComponents &&
+                  specifier.imported.name === 'PureComponent'
+                )
               )
             ))
             .map(specifier => specifier.local.name);
@@ -64,6 +69,10 @@ export default function({ types: t }) {
         name === 'defaultProps'
       )) {
         this.properties.push(path);
+      } else if (!path.node.static && (
+        name === 'props' && path.node.typeAnnotation
+      )) {
+        return;
       } else {
         this.isPure = false;
       }
@@ -72,7 +81,7 @@ export default function({ types: t }) {
     MemberExpression(path) {
       const { node } = path;
 
-      // non-this member expressions dont matter.
+      // Non-this member expressions dont matter.
       if (!t.isThisExpression(node.object)) {
         return;
       }
@@ -98,9 +107,9 @@ export default function({ types: t }) {
 
   return {
     visitor: {
-      Class(path) {
+      Class(path, options) {
         // Apply only to React.Component or React.PureComponent classes.
-        if (!isReactClass(path)) {
+        if (!isReactClass(path, options.opts.pureComponents)) {
           return;
         }
 
@@ -138,6 +147,37 @@ export default function({ types: t }) {
           [t.identifier(renameProps ? '__props': 'props')],
           state.renderMethod.node.body
         );
+
+        // Replace defaultProps with an Object.assign on entry.
+        if (options.opts.assignDefaultProps) {
+          const defaultProps = state.properties.find(
+            prop => prop.node.key.name === 'defaultProps'
+          );
+
+          if (defaultProps) {
+            state.properties = state.properties.filter(
+              prop => prop.node.key.name !== 'defaultProps'
+            );
+
+            functionalComponent.body.body.unshift(
+              t.assignmentExpression(
+                '=',
+                t.identifier(renameProps ? '__props': 'props'),
+                t.callExpression(
+                  t.memberExpression(
+                    t.identifier('Object'),
+                    t.identifier('assign')
+                  ),
+                  [
+                    t.objectExpression([]),
+                    defaultProps.node.value,
+                    t.identifier(renameProps ? '__props': 'props'),
+                  ]
+                )
+              )
+            )
+          }
+        }
 
         replacement.push(functionalComponent);
 
