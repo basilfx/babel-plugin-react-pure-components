@@ -1,13 +1,50 @@
-export default function ({ types: t }) {
-  // is `class extends React.Component`?
-  function isReactClass(node) {
-    const superClass = node.superClass;
-    return (
+export default function({ types: t }) {
+  function isReactClass(path) {
+    const superClass = path.node.superClass;
+
+    const isDirectReactClass = (
       t.isMemberExpression(superClass) &&
       t.isIdentifier(superClass.object, { name: 'React' }) &&
-      t.isIdentifier(superClass.property, { name: 'Component' })
+      (
+        t.isIdentifier(superClass.property, { name: 'Component' }) ||
+        t.isIdentifier(superClass.property, { name: 'PureComponent' })
+      )
     );
-  }
+
+    if (isDirectReactClass) {
+      return true;
+    }
+
+    const state = {
+      localComponentNames: []
+    };
+    const importVisitor = {
+      ImportDeclaration(nestedPath) {
+        const node = nestedPath.node;
+
+        if (t.isStringLiteral(node.source, { value: 'react' })) {
+          this.localComponentNames = node.specifiers
+            .filter(specifier => (
+              t.isImportSpecifier(specifier) &&
+              (
+                specifier.imported.name === 'Component' ||
+                specifier.imported.name === 'PureComponent'
+              )
+            ))
+            .map(specifier => specifier.local.name);
+          }
+        }
+    };
+
+    // Check for imports as local variable names.
+    path.findParent(p => t.isProgram(p)).traverse(importVisitor, state);
+
+    if (state.localComponentNames.length === 0) {
+      return false;
+    }
+
+    return state.localComponentNames.indexOf(superClass.name) !== -1;
+  };
 
   const bodyVisitor = {
     ClassMethod(path) {
@@ -35,19 +72,19 @@ export default function ({ types: t }) {
     MemberExpression(path) {
       const { node } = path;
 
-      // non-this member expressions dont matter
+      // non-this member expressions dont matter.
       if (!t.isThisExpression(node.object)) {
         return;
       }
 
-      // Don't allow this.<anything other than props>
+      // Don't allow this.<anything other than props>.
       if (!t.isIdentifier(node.property, { name: 'props' })) {
         this.isPure = false;
         path.stop();
         return;
       }
 
-      // this.props.foo => props.foo
+      // Rewrite this.props.foo => props.foo.
       this.thisProps.push(path);
     },
 
@@ -62,8 +99,8 @@ export default function ({ types: t }) {
   return {
     visitor: {
       Class(path) {
-        if (!isReactClass(path.node)) {
-          // yo, fuck this class then.
+        // Apply only to React.Component or React.PureComponent classes.
+        if (!isReactClass(path)) {
           return;
         }
 
@@ -74,54 +111,72 @@ export default function ({ types: t }) {
           isPure: true
         };
 
-        // get the render method and make sure it doesn't have any other methods
+        // Get the render method and make sure it doesn't have any other
+        // methods.
         path.traverse(bodyVisitor, state);
 
         if (!state.isPure || !state.renderMethod) {
-          // fuck this class too.
+          // Not a class that can be converted to a functional component.
           return;
         }
 
         const id = t.identifier(path.node.id.name);
 
-        let replacement = [];
+        const replacement = [];
+
+        const renameProps = state.renderMethod.node.body.body.some(function(statement) {
+            const isVariableDeclaration = statement.type === 'VariableDeclaration';
+            return isVariableDeclaration && statement.declarations.filter(declr => declr.id.name === 'props').length;
+        });
 
         state.thisProps.forEach(function(thisProp) {
-          thisProp.replaceWith(t.identifier('props'));
+          thisProp.replaceWith(t.identifier(renameProps ? '__props': 'props'));
         });
 
-        replacement.push(
-          t.functionDeclaration(
-            id,
-            [t.identifier('props')],
-            state.renderMethod.node.body
-          )
+        const functionalComponent = t.functionDeclaration(
+          id,
+          [t.identifier(renameProps ? '__props': 'props')],
+          state.renderMethod.node.body
         );
 
-        state.properties.forEach(prop => {
-          replacement.push(t.expressionStatement(
-            t.assignmentExpression('=',
-              t.MemberExpression(id, prop.node.key),
-              prop.node.value
-            )
-          ));
-        });
+        replacement.push(functionalComponent);
+
+        const staticProps = state.properties.map(prop => t.expressionStatement(
+          t.assignmentExpression(
+            '=',
+            t.memberExpression(id, prop.node.key),
+            prop.node.value
+          )
+        ));
 
         if (t.isExpression(path.node)) {
-          replacement.push(t.returnStatement(id));
-
-          replacement = t.callExpression(
-            t.functionExpression(null, [],
-              t.blockStatement(replacement)
-            ),
-            []
+          // Wrap with IIFE for expressions.
+          const iife = [
+            functionalComponent,
+            ...staticProps,
+            t.returnStatement(id)
+          ];
+          path.replaceWith(
+            t.callExpression(
+              t.functionExpression(
+                null,
+                [],
+                t.blockStatement(iife)
+              ),
+              []
+            )
           );
+        } else if (t.isExportDeclaration(path.parent)) {
+          // Fix "We don't know what to do with this node type" errors
+          // for ES6 default/named exports.
+          path.replaceWith(functionalComponent);
+          path.parentPath.insertAfter(staticProps);
+        } else {
+          // Everything else
+          const replacement = [functionalComponent, ...staticProps];
+          path.replaceWithMultiple(replacement);
         }
-
-        path.replaceWithMultiple(
-          replacement
-        );
       }
     }
   };
-}
+};
