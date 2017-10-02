@@ -4,7 +4,10 @@ module.exports = class Foo extends React.Component {
   };
 
   render() {
+    const props = {
+        foo: 'bar'
+    };
     this.props.foo;
-    return <div />;
+    return <div/>;
   }
 };

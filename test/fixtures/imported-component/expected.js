@@ -1,3 +1,5 @@
+import React, { Component, PropTypes } from 'react';
+
 module.exports = function () {
   function Foo(props) {
     props.foo;
@@ -5,7 +7,7 @@ module.exports = function () {
   }
 
   Foo.propTypes = {
-    foo: React.PropTypes.string.isRequired
+    foo: PropTypes.string.isRequired
   };
   return Foo;
 }();

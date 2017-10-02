@@ -1,6 +1,9 @@
 module.exports = function () {
-  function Foo(props) {
-    props.foo;
+  function Foo(__props) {
+    const props = {
+      foo: 'bar'
+    };
+    __props.foo;
     return <div />;
   }
 
