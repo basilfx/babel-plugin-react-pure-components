@@ -1,12 +1,7 @@
-# babel-plugin-react-pure-components
-
-### Moved to: https://github.com/thejameskyle/babel-react-optimize
-
----
-
+# babel-plugin-transform-react-pure-components
 Optimize React code by making pure classes into functions
 
-> Note: Requires React v0.14 or higher.
+> Note: Requires React v15.0.0 or higher.
 
 ## Example
 
@@ -47,7 +42,7 @@ MyComponent.propTypes = {
 ## Installation
 
 ```sh
-$ npm install babel-plugin-react-pure-components
+$ npm install babel-plugin-transform-react-pure-components
 ```
 
 ## Usage
@@ -72,6 +67,6 @@ $ babel --plugins react-pure-components script.js
 
 ```javascript
 require("babel-core").transform("code", {
-  plugins: ["react-pure-components"]
+  plugins: ["transform-react-pure-components"]
 });
 ```
