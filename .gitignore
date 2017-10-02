@@ -1,3 +1,4 @@
 node_modules
-*.log
 lib
+*.log
+yarn.lock
