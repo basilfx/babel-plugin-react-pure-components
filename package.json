@@ -1,6 +1,6 @@
 {
   "name": "babel-plugin-transform-react-pure-components",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Optimize React code by transforming pure components into stateless functional components.",
   "repository": "basilfx/babel-plugin-transform-react-pure-components",
   "license": "MIT",
