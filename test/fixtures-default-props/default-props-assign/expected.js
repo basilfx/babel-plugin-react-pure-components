@@ -1,7 +1,8 @@
+const _defaultProps = {
+  foo: 123
+};
 export default function Foo(props) {
-  props = Object.assign({}, {
-    foo: 123
-  }, props)
+  props = Object.assign({}, _defaultProps, props)
 
   props.foo;
   return <div />;

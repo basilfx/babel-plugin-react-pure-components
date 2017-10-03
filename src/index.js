@@ -159,6 +159,14 @@ export default function({ types: t }) {
               prop => prop.node.key.name !== 'defaultProps'
             );
 
+            const tempId = path.scope.generateUidIdentifier("defaultProps");
+
+            path.scope.parent.push({
+              id: tempId,
+              kind: 'const',
+              init: defaultProps.node.value
+            })
+
             functionalComponent.body.body.unshift(
               t.assignmentExpression(
                 '=',
@@ -170,7 +178,7 @@ export default function({ types: t }) {
                   ),
                   [
                     t.objectExpression([]),
-                    defaultProps.node.value,
+                    tempId,
                     t.identifier(renameProps ? '__props': 'props'),
                   ]
                 )
