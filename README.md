@@ -1,6 +1,8 @@
 # babel-plugin-transform-react-pure-components
 Optimize React code by transforming pure components into stateless functional components.
 
+[![Build Status](https://travis-ci.org/basilfx/babel-plugin-transform-react-pure-components.svg?branch=master)](https://travis-ci.org/basilfx/babel-plugin-transform-react-pure-components)
+
 ## Introduction
 In React, a pure component is a component that renders the same given the same properties and state. In addition stateless functions can replace class-based components that only rely on properties.
 
