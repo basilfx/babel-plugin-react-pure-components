@@ -159,31 +159,47 @@ export default function({ types: t }) {
               prop => prop.node.key.name !== 'defaultProps'
             );
 
-            const tempId = path.scope.generateUidIdentifier("defaultProps");
+            if (defaultProps.node.value.properties.length) {
+              // One option is to hoist the default props to the parent scope,
+              // so they are not allocated each time you instantiate the method.
+              let temp;
 
-            path.scope.parent.push({
-              id: tempId,
-              kind: 'const',
-              init: defaultProps.node.value
-            })
+              if (options.opts.assignDefaultProps === 'hoist') {
+                const tempId = path.scope.generateUidIdentifier("defaultProps");
 
-            functionalComponent.body.body.unshift(
-              t.assignmentExpression(
-                '=',
-                t.identifier(renameProps ? '__props': 'props'),
-                t.callExpression(
-                  t.memberExpression(
-                    t.identifier('Object'),
-                    t.identifier('assign')
-                  ),
-                  [
-                    t.objectExpression([]),
-                    tempId,
-                    t.identifier(renameProps ? '__props': 'props'),
-                  ]
+                path.scope.parent.push({
+                  id: tempId,
+                  kind: 'const',
+                  init: defaultProps.node.value
+                });
+
+                temp = [
+                  t.objectExpression([]),
+                  tempId,
+                ];
+              } else {
+                temp = [
+                  defaultProps.node.value
+                ];
+              }
+
+              functionalComponent.body.body.unshift(
+                t.assignmentExpression(
+                  '=',
+                  t.identifier(renameProps ? '__props': 'props'),
+                  t.callExpression(
+                    t.memberExpression(
+                      t.identifier('Object'),
+                      t.identifier('assign')
+                    ),
+                    [
+                      ...temp,
+                      t.identifier(renameProps ? '__props': 'props'),
+                    ]
+                  )
                 )
               )
-            )
+            }
           }
         }
 
