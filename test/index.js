@@ -33,4 +33,5 @@ function run(directory) {
 
 describe("fixtures", () => run("fixtures"));
 describe("fixtures (default props)", () => run("fixtures-default-props"));
+describe("fixtures (hoist default props)", () => run("fixtures-hoist-default-props"));
 describe("fixtures (pure components)", () => run("fixtures-pure-components"));

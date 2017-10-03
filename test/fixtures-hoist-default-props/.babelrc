@@ -1,0 +1,10 @@
+{
+  "plugins": [
+    "syntax-flow",
+    "syntax-jsx",
+    "syntax-class-properties",
+    ["../../../src/index.js", {
+        "assignDefaultProps": "hoist"
+    }]
+  ]
+}
