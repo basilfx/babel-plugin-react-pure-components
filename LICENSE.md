@@ -1,4 +1,5 @@
 Copyright (c) 2015 James Kyle <me@thejameskyle.com>
+Copyright (c) 2017 James Kyle <basstottelaar@gmail.com>
 
 MIT License
 
