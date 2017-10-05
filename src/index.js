@@ -1,5 +1,5 @@
-export default function({ types: t }) {
-  function isReactClass(path, pureComponents) {
+export default function ({ types: t }) {
+  function isReactClass (path, pureComponents) {
     const superClass = path.node.superClass;
 
     const isDirectReactClass = (
@@ -22,7 +22,7 @@ export default function({ types: t }) {
       localComponentNames: []
     };
     const importVisitor = {
-      ImportDeclaration(nestedPath) {
+      ImportDeclaration (nestedPath) {
         const node = nestedPath.node;
 
         if (t.isStringLiteral(node.source, { value: 'react' })) {
@@ -37,8 +37,8 @@ export default function({ types: t }) {
               )
             ))
             .map(specifier => specifier.local.name);
-          }
         }
+      }
     };
 
     // Check for imports as local variable names.
@@ -49,10 +49,10 @@ export default function({ types: t }) {
     }
 
     return state.localComponentNames.indexOf(superClass.name) !== -1;
-  };
+  }
 
   const bodyVisitor = {
-    ClassMethod(path) {
+    ClassMethod (path) {
       if (path.node.key.name === 'render') {
         this.renderMethod = path;
       } else {
@@ -61,7 +61,7 @@ export default function({ types: t }) {
       }
     },
 
-    ClassProperty(path) {
+    ClassProperty (path) {
       const name = path.node.key.name;
 
       if (path.node.static && (
@@ -72,13 +72,13 @@ export default function({ types: t }) {
       } else if (!path.node.static && (
         name === 'props' && path.node.typeAnnotation
       )) {
-        return;
+        // Skip.
       } else {
         this.isPure = false;
       }
     },
 
-    MemberExpression(path) {
+    MemberExpression (path) {
       const { node } = path;
 
       // Non-this member expressions dont matter.
@@ -97,7 +97,7 @@ export default function({ types: t }) {
       this.thisProps.push(path);
     },
 
-    JSXIdentifier(path) {
+    JSXIdentifier (path) {
       if (path.node.name === 'ref') {
         this.isPure = false;
         path.stop();
@@ -107,7 +107,7 @@ export default function({ types: t }) {
 
   return {
     visitor: {
-      Class(path, options) {
+      Class (path, options) {
         // Apply only to React.Component or React.PureComponent classes.
         if (!isReactClass(path, options.opts.pureComponents)) {
           return;
@@ -133,18 +133,19 @@ export default function({ types: t }) {
 
         const replacement = [];
 
-        const renameProps = state.renderMethod.node.body.body.some(function(statement) {
-            const isVariableDeclaration = statement.type === 'VariableDeclaration';
-            return isVariableDeclaration && statement.declarations.filter(declr => declr.id.name === 'props').length;
+        const renameProps = state.renderMethod.node.body.body.some((statement) => {
+          const isVariableDeclaration = statement.type === 'VariableDeclaration';
+
+          return isVariableDeclaration && statement.declarations.filter(declr => declr.id.name === 'props').length;
         });
 
-        state.thisProps.forEach(function(thisProp) {
-          thisProp.replaceWith(t.identifier(renameProps ? '__props': 'props'));
+        state.thisProps.forEach((thisProp) => {
+          thisProp.replaceWith(t.identifier(renameProps ? '__props' : 'props'));
         });
 
         const functionalComponent = t.functionDeclaration(
           id,
-          [t.identifier(renameProps ? '__props': 'props')],
+          [t.identifier(renameProps ? '__props' : 'props')],
           state.renderMethod.node.body
         );
 
@@ -165,7 +166,7 @@ export default function({ types: t }) {
               let temp;
 
               if (options.opts.assignDefaultProps === 'hoist') {
-                const tempId = path.scope.generateUidIdentifier("defaultProps");
+                const tempId = path.scope.generateUidIdentifier('defaultProps');
 
                 path.scope.parent.push({
                   id: tempId,
@@ -175,7 +176,7 @@ export default function({ types: t }) {
 
                 temp = [
                   t.objectExpression([]),
-                  tempId,
+                  tempId
                 ];
               } else {
                 temp = [
@@ -186,7 +187,7 @@ export default function({ types: t }) {
               functionalComponent.body.body.unshift(
                 t.assignmentExpression(
                   '=',
-                  t.identifier(renameProps ? '__props': 'props'),
+                  t.identifier(renameProps ? '__props' : 'props'),
                   t.callExpression(
                     t.memberExpression(
                       t.identifier('Object'),
@@ -194,11 +195,11 @@ export default function({ types: t }) {
                     ),
                     [
                       ...temp,
-                      t.identifier(renameProps ? '__props': 'props'),
+                      t.identifier(renameProps ? '__props' : 'props')
                     ]
                   )
                 )
-              )
+              );
             }
           }
         }
@@ -243,4 +244,4 @@ export default function({ types: t }) {
       }
     }
   };
-};
+}
