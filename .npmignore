@@ -1,3 +1,4 @@
+.babelrc
+.eslintrc
 node_modules
-*.log
-src
+yarn.lock

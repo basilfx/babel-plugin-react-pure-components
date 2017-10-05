@@ -85,10 +85,10 @@ require("babel-core").transform("code", {
 The options below may not improve performance, and may produce unpredictable results.
 
 * `pureComponents = false` &mdash; Transform components extending `React.PureComponent` classes (this effectively converts them back to `React.Component`).
-* `assignDefaultProps = false` &mdash; Use `Object.assign(defaultProps, props)` to calculate the props. Set to `hoist` to hoist them to the parent scope (can be useful in combination with [babel-plugin-transform-react-remove-prop-types](https://github.com/oliviertassinari/babel-plugin-transform-react-remove-prop-types)).
+* `assignDefaultProps = false` &mdash; When true, use `Object.assign(defaultProps, props)` instead of an additional static definition. Set to `hoist` to hoist them to the parent scope (can be useful in combination with [babel-plugin-transform-react-remove-prop-types](https://github.com/oliviertassinari/babel-plugin-transform-react-remove-prop-types)).
 
 
 ## Benchmarks
-According to [this article](https://medium.com/missive-app/45-faster-react-functional-components-now-3509a668e69f), a performance boost can be expected. However, [another article](https://moduscreate.com/react_component_rendering_performance/) shows no performance boost. Nontheless, functional stateless components [may allow](https://twitter.com/dan_abramov/status/755343749983657986) for optimizations in the future.
+According to [this article](https://medium.com/missive-app/45-faster-react-functional-components-now-3509a668e69f), a performance boost can be expected. However, [another article](https://moduscreate.com/react_component_rendering_performance/) shows no performance boost. Nonetheless, functional stateless components [may allow](https://twitter.com/dan_abramov/status/755343749983657986) for optimizations in the future.
 
 In a (non-scientific) [benchmark](https://gist.github.com/basilfx/bd0e5ea9ebda1b40d34bf23bd3dd7835), using this plugin yields an improvement of 22% over a class-based component (React 16, 10.000 instantiations of a component, babel-preset-env @ Chrome 59).
