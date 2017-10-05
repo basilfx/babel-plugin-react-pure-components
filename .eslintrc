@@ -1,0 +1,17 @@
+{
+    "env": {
+        "browser": true,
+        "node": true
+    },
+    "extends": [
+        "semistandard"
+    ],
+    "parser": "babel-eslint",
+    "plugins": [
+        "babel",
+        "import"
+    ],
+    "settings": {
+        "import/parser": "babel-eslint"
+    }
+}
